@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Contenido de seguridad para Electron -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';"/>
+    <title>Jenkins Log Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="navbar">
+            <div class="brand">
+                <h1>Jenkins <span>Analyzer</span></h1>
+            </div>
+            <div class="actions">
+                <label for="file-upload" class="btn primary-btn">
+                    <span>Cargar Log (.txt)</span>
+                    <input id="file-upload" type="file" accept=".txt, .log">
+                </label>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Drag and drop zone -->
+            <div id="drop-zone" class="drop-zone">
+                <svg xmlns="http://www.w3.org/2000/svg" class="cloud-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p>Arrastra tu archivo de log de Jenkins aquí o haz clic en "Cargar Log"</p>
+                <span class="subtext">Analizaremos las peticiones a Endpoints y Criticidad al instante.</span>
+            </div>
+
+            <!-- Dashboard stats (Hidden initially) -->
+            <div id="stats-panel" class="stats-panel hidden">
+                <div class="stat-card">
+                    <h3>Total Llamadas</h3>
+                    <p id="stat-total" class="stat-value">0</p>
+                </div>
+                <div class="stat-card stat-success">
+                    <h3>Exitosos (200-299)</h3>
+                    <p id="stat-success" class="stat-value">0</p>
+                </div>
+                <div class="stat-card stat-warning">
+                    <h3>Errores (400-499)</h3>
+                    <p id="stat-warning" class="stat-value">0</p>
+                </div>
+                <div class="stat-card stat-critical">
+                    <h3>Críticos (500+)</h3>
+                    <p id="stat-critical" class="stat-value">0</p>
+                </div>
+            </div>
+
+            <!-- Table section -->
+            <div id="table-container" class="table-container hidden">
+                <div class="table-controls">
+                    <input type="text" id="search-input" placeholder="Buscar endpoint o status (ej: 500)..." class="search-input">
+                    <div class="filters">
+                        <button class="filter-btn active" data-filter="all">Todos</button>
+                        <button class="filter-btn" data-filter="success">Exitosos</button>
+                        <button class="filter-btn" data-filter="warning">Advs (4xx)</button>
+                        <button class="filter-btn" data-filter="critical">Críticos (5xx)</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th width="10%">Method</th>
+                                <th width="60%">Endpoint URL</th>
+                                <th width="10%">Status</th>
+                                <th width="20%">Line</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- JS will populate rows -->
+                        </tbody>
+                    </table>
+                    <div id="empty-state" class="empty-state hidden">No se encontraron resultados para los filtros actuales.</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripting -->
+    <script src="renderer.js"></script>
+</body>
+</html>
