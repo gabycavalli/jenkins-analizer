@@ -1,56 +1,56 @@
 # Jenkins Log Analyzer
 
-Una herramienta moderna y rápida (basada en tecnologías Web y Electron) para analizar logs extraídos de Jenkins y obtener un reporte visual de los endpoints llamados, detectando automáticamente fallos críticos y mostrando su criticidad.
+A modern, fast tool (built with Web technologies and Electron) to analyze extracted Jenkins logs and get a visual report of the called endpoints, automatically detecting critical failures and displaying their severity.
 
-Al procesarse 100% de manera local, los logs sensibles nunca salen de tu ordenador.
-
----
-
-## 🚀 Método 1: Uso Rápido en el Navegador (Edge / Chrome)
-Como la aplicación está diseñada con tecnologías web modernas independientes (Single Page Application), no es estrictamente necesario compilarla para usarla.
-
-1. Abre la carpeta del proyecto en el Explorador de Archivos de Windows: `C:\Users\gabri\repos\jenkins-reader`
-2. Haz **doble clic** en el archivo `index.html`.
-3. Se abrirá en tu navegador predeterminado (por ejemplo, Microsoft Edge).
-4. Arrastra tu archivo de texto (`Build#1999...txt`) al área de escaneo para procesarlo inmediatamente.
+Since everything is processed 100% locally, sensitive logs never leave your computer.
 
 ---
 
-## 💻 Método 2: Uso como Aplicación de Escritorio Nativa (Modo de Desarrollo)
-Si prefieres verlo en su propia ventana aislada sin pestañas de navegador usando **Electron**.
+## 🚀 Method 1: Quick Browser Usage (Edge / Chrome)
+Since the application is designed with independent modern web technologies (as a Single Page Application), it is not strictly necessary to compile it to use it.
 
-**Requisitos Previos:**
-- Tener instalado [Node.js](https://nodejs.org/) en tu PC.
+1. Open the project folder in Windows File Explorer: `C:\Users\gabri\repos\jenkins-reader`
+2. **Double-click** the `index.html` file.
+3. It will open in your default browser (e.g., Microsoft Edge or Chrome).
+4. Drag and drop your text file (`Build#1999...txt`) into the scan area to process it immediately.
 
-1. Abre tu terminal (PowerShell o CMD) y navega a la carpeta del proyecto:
+---
+
+## 💻 Method 2: Native Desktop App Usage (Development Mode)
+If you prefer to view it in its own isolated window without browser tabs using **Electron**.
+
+**Prerequisites:**
+- Have [Node.js](https://nodejs.org/) installed on your PC.
+
+1. Open your terminal (PowerShell or CMD) and navigate to the project folder:
    ```bash
    cd c:\Users\gabri\repos\jenkins-reader
    ```
-2. *(Una sola vez)* Asegúrate de que las dependencias estén instaladas:
+2. *(First time only)* Make sure the dependencies are installed:
    ```bash
    npm install
    ```
-3. Ejecuta la aplicación de escritorio:
+3. Run the desktop application:
    ```bash
    npm start
    ```
 
 ---
 
-## 📦 Embalaje: Compilar a Ejecutable (`.exe`)
-Puedes empaquetar la aplicación para enviársela a tus compañeros de equipo como un archivo nativo `.exe`. Ellos no necesitarán instalar Node ni saber usar la consola.
+## 📦 Packaging: Build into an Executable (`.exe`)
+You can package the application to send it to your teammates as a native `.exe` file. They won't need to install Node or know how to use the console.
 
-1. Abre la consola en `c:\Users\gabri\repos\jenkins-reader`.
-2. Ejecuta el empaquetador:
+1. Open the console at `c:\Users\gabri\repos\jenkins-reader`.
+2. Run the builder:
    ```bash
    npm run build
    ```
-3. Espera un par de minutos a que **electron-builder** descargue los binarios básicos (solo en la primera compilación) y genere tu programa.
-4. El programa final será colocado en una subcarpeta nueva llamada `dist` u `out` dentro del directorio. ¡Distribuye el archivo generado!. 
+3. Wait a few minutes for **electron-builder** to download the necessary binaries (only on the first build) and generate your program.
+4. The final program will be placed in a new subfolder called `dist` or `out` inside the directory. Distribute the generated file!
 
 ---
 
-## 🎨 Características Adicionales
-- **Dashboard Visual**: Resumen de peticiones exitosas (200), advertencias (400) y errores de servidor (500+).
-- **Filtros en Tiempo Real**: Capacidad de buscar por status o segmento de URL con respuesta inmediata.
-- **Modo Oscuro Glassmorphic**: Diseño amigable con colores de criticidad precisos.
+## 🎨 Additional Features
+- **Visual Dashboard**: Summary of successful requests (200), warnings (400), and server errors (500+).
+- **Real-Time Filters**: Ability to search by status or URL segment with immediate matching.
+- **Glassmorphic Dark Mode**: Eye-friendly UI with precise severity colors.
