@@ -89,73 +89,81 @@ function parseLog(text) {
     allEndpoints = [];
     const lines = text.split('\n');
     
-    // Expression to find common HTTP lines. 
-    // This looks for an HTTP Method, a URL, and a 3-digit status code.
-    // Example: "POST https://api.example.com/item 400" or similar
-    // We try multiple matching strategies since logs are heterogeneous
-    
     const urlRegex = /(https?:\/\/[^\s"']+)/i;
     const methodRegex = /\b(GET|POST|PUT|DELETE|PATCH)\b/i;
     const statusRegex = /\b(2\d{2}|3\d{2}|4\d{2}|5\d{2})\b/;
 
-    // Often Jenkins logs contain requests and responses split across lines, 
-    // but for simplicity we extract lines that seem to contain an endpoint.
-    
-    let currentMethod = 'UNKNOWN';
-    let currentUrl = null;
+    let blocks = [];
+    let currentBlock = null;
 
+    // Fase 1: Agrupar en bloques por cada Request/Endpoint
     lines.forEach((line, index) => {
         const cleanLine = line.trim();
         if (!cleanLine) return;
 
-        // Try to detect a request
-        const methodMatch = cleanLine.match(methodRegex);
-        const urlMatch = cleanLine.match(urlRegex);
-        
-        if (methodMatch && urlMatch) {
-            currentMethod = methodMatch[1].toUpperCase();
-            currentUrl = urlMatch[1];
-        } else if (urlMatch && !currentUrl) {
-             currentUrl = urlMatch[1];
-             currentMethod = 'GET'; // Defaults
-        }
-
-        // Try to detect a status code
-        const statusMatch = cleanLine.match(statusRegex);
-        
-        // If we have a URL and a status in the same or nearby line
-        if (currentUrl && statusMatch) {
-            // Exclude common noise like port numbers (e.g. 5000, 8080) that might match \b200\b inside IPs
-            // The regex \b(2\d{2}...)\b covers exact 3 digits, so 8080 is excluded.
-            // Port numbers matching 443 ? It's not in the 200/400/500 range (unless 443 matches, wait 4\d{2} matches 443)
-            
-            const statusCode = parseInt(statusMatch[1], 10);
-            
-            // Filter obvious false positives
-            if (statusCode !== 443 && statusCode !== 404 && statusCode !== 22) {
-                allEndpoints.push({
-                    method: currentMethod,
-                    url: currentUrl,
-                    status: statusCode,
-                    lineNum: index + 1
-                });
-                
-                // Reset context to avoid duplicate mappings
-                currentUrl = null;
-                currentMethod = 'UNKNOWN';
+        if (cleanLine.match(urlRegex) || cleanLine.startsWith('Endpoint:')) {
+            if (currentBlock) blocks.push(currentBlock);
+            currentBlock = {
+                startLineNum: index + 1,
+                lines: [line], // Mantener la línea original para el formato
+                urlMatch: cleanLine.match(urlRegex),
+                methodMatch: cleanLine.match(methodRegex)
+            };
+        } else if (currentBlock) {
+            // Limitar a 500 líneas por bloque para evitar excesos de memoria
+            if (currentBlock.lines.length < 500) {
+                currentBlock.lines.push(line);
             }
         }
     });
+    if (currentBlock) blocks.push(currentBlock);
 
-    // If the heuristics fail, we try a fallback mode:
+    // Fase 2: Analizar cada bloque
+    blocks.forEach(block => {
+        let method = 'GET';
+        if (block.methodMatch) method = block.methodMatch[1].toUpperCase();
+        
+        let url = block.urlMatch ? block.urlMatch[1] : 'URL';
+        
+        // Buscar el status en todo el bloque
+        let status = null;
+        for (let line of block.lines) {
+            const sm = line.match(statusRegex);
+            if (sm) {
+                const code = parseInt(sm[1], 10);
+                // Filtrar ruido común (puertos, etc.)
+                if (code !== 443 && code !== 404 && code !== 22 && code !== 808 && code !== 5002) {
+                    status = code;
+                    break;
+                }
+            }
+        }
+
+        if (!status) {
+            const hasError = block.lines.some(l => l.toUpperCase().includes('ERROR') || l.includes('Exception'));
+            if (hasError) status = 500;
+        }
+
+        if (status) {
+            allEndpoints.push({
+                method: method,
+                url: url,
+                trace: block.lines.join('\n'), // Traza completa incluyendo JSONs
+                status: status,
+                lineNum: block.startLineNum
+            });
+        }
+    });
+
+    // Fallback mode
     if (allEndpoints.length === 0) {
-        let fakeId = 1;
         lines.forEach((line, index) => {
             const statusMatch = line.match(/\b(500|502|503|504|400|401|403)\b/);
             if (statusMatch) {
                 allEndpoints.push({
                     method: 'ERROR',
-                    url: line.substring(0, 100) + '...', // Just show snippet
+                    url: 'Error',
+                    trace: line.trim(),
                     status: parseInt(statusMatch[1]),
                     lineNum: index + 1
                 });
@@ -193,7 +201,7 @@ function renderTable() {
     // Apply text search
     if (term) {
         filtered = filtered.filter(e => 
-            e.url.toLowerCase().includes(term) || 
+            e.trace.toLowerCase().includes(term) || 
             e.status.toString().includes(term) ||
             e.method.toLowerCase().includes(term)
         );
@@ -218,13 +226,41 @@ function renderTable() {
                 badgeClass = 'status-500';
             }
 
+            const lines = item.trace.split('\n');
+            const summaryLine = lines[0].length > 120 ? lines[0].substring(0, 120) + '...' : lines[0];
+
+            let traceHtml = '';
+            if (lines.length > 1 || lines[0].length > 120) {
+                traceHtml = `
+                    <details class="trace-details">
+                        <summary class="trace-summary" title="Clic para expandir traza">${escapeHTML(summaryLine)}</summary>
+                        <div class="trace-content">${escapeHTML(item.trace)}</div>
+                    </details>
+                `;
+            } else {
+                traceHtml = `<div class="trace-summary">${escapeHTML(item.trace)}</div>`;
+            }
+
             tr.innerHTML = `
-                <td><span class="method">${item.method}</span></td>
-                <td><span class="endpoint">${item.url}</span></td>
+                <td><span class="method">${escapeHTML(item.method)}</span></td>
+                <td><div class="endpoint">${traceHtml}</div></td>
                 <td><span class="badge ${badgeClass}">${label}</span></td>
                 <td><span class="line-num">Línea ${item.lineNum}</span></td>
             `;
             tbody.appendChild(tr);
         });
     }
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
 }

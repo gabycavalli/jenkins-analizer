@@ -17,7 +17,7 @@
             <div class="actions">
                 <label for="file-upload" class="btn primary-btn">
                     <span>Cargar Log (.txt)</span>
-                    <input id="file-upload" type="file" accept=".txt, .log">
+                    <input id="file-upload" type="file" accept=".txt, .log" aria-label="Subir archivo de log">
                 </label>
             </div>
         </header>
@@ -55,7 +55,7 @@
             <!-- Table section -->
             <div id="table-container" class="table-container hidden">
                 <div class="table-controls">
-                    <input type="text" id="search-input" placeholder="Buscar endpoint o status (ej: 500)..." class="search-input">
+                    <input type="text" id="search-input" aria-label="Buscar en los logs" placeholder="Buscar endpoint o status (ej: 500)..." class="search-input">
                     <div class="filters">
                         <button class="filter-btn active" data-filter="all">Todos</button>
                         <button class="filter-btn" data-filter="success">Exitosos</button>
@@ -68,10 +68,10 @@
                     <table id="results-table">
                         <thead>
                             <tr>
-                                <th width="10%">Method</th>
-                                <th width="60%">Endpoint URL</th>
-                                <th width="10%">Status</th>
-                                <th width="20%">Line</th>
+                                <th width="10%" scope="col">Method</th>
+                                <th width="70%" scope="col">Log / URL</th>
+                                <th width="10%" scope="col">Status</th>
+                                <th width="10%" scope="col">Line</th>
                             </tr>
                         </thead>
                         <tbody id="table-body">
